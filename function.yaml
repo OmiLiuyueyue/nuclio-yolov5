@@ -1,0 +1,55 @@
+metadata:
+  name: yolov5
+  namespace: cvat
+  annotations:
+    name: YOLO
+    type: detector
+    framework: onnxruntime
+    spec: |
+      [
+        { "id": 0, "name": "person" },
+        { "id": 1, "name": "bicycle" },
+        { "id": 2, "name": "motorbike" },
+        { "id": 3, "name": "tricycle" },
+        { "id": 4, "name": "car" },
+        { "id": 5, "name": "bus" },
+        { "id": 6, "name": "truck" },
+        { "id": 7, "name": "plate" },
+        { "id": 8, "name": "R" },
+        { "id": 9, "name": "G" },
+        { "id": 10, "name": "Y" }
+      ]
+
+spec:
+  description: YOLO ONNXRUNTIME
+  runtime: 'python:3.6'
+  handler: main:handler
+  eventTimeout: 30s
+  build:
+    image: cvat/yolov5
+
+    directives:
+      preCopy:
+        - kind: USER
+          value: root
+        - kind: RUN
+          value: apt update && apt install --no-install-recommends -y libglib2.0-0
+        - kind: WORKDIR
+          value: /opt/nuclio
+
+  triggers:
+    myHttpTrigger:
+      maxWorkers: 2
+      kind: 'http'
+      workerAvailabilityTimeoutMilliseconds: 10000
+      attributes:
+        maxRequestBodySize: 33554432 # 32MB
+        port: 32768
+
+  platform:
+    attributes:
+      restartPolicy:
+        name: always
+        maximumRetryCount: 3
+      mountMode: volume
+      network: cvat_cvat
